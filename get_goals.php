@@ -1,7 +1,6 @@
 <?php
+include "cors.php";
 include "config/db.php";
-header("Content-Type: application/json");
-
 
 $result = $conn->query("SELECT * FROM saving_goals ORDER BY id DESC");
 $goals = [];
