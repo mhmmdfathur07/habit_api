@@ -1,24 +1,28 @@
 <?php
-// Coba ambil environment variables dari Railway
-$server   = getenv("MYSQLHOST");
-$username = getenv("MYSQLUSER");
-$password = getenv("MYSQLPASSWORD");
-$database = getenv("MYSQLDATABASE");
-$port     = getenv("MYSQLPORT");
+// --- Izinkan semua origin (CORS) ---
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Jika tidak ada (berarti dijalankan di lokal/XAMPP)
-if (!$server || !$username || !$database) {
+// --- Konfigurasi koneksi database untuk Railway ---
+$DATABASE_URL = getenv("DATABASE_URL");
+
+if ($DATABASE_URL) {
+    $url = parse_url($DATABASE_URL);
+    $server = $url["host"];
+    $username = $url["user"];
+    $password = $url["pass"];
+    $database = substr($url["path"], 1);
+} else {
+    // fallback lokal (XAMPP)
     $server = "localhost";
     $username = "root";
     $password = "";
     $database = "habit_db";
-    $port = 3306;
 }
 
-// Buat koneksi
-$conn = new mysqli($server, $username, $password, $database, $port);
+$conn = new mysqli($server, $username, $password, $database);
 
-// Cek koneksi
 if ($conn->connect_error) {
     die(json_encode(["error" => "Koneksi gagal: " . $conn->connect_error]));
 }
