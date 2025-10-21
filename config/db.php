@@ -8,22 +8,12 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// --- Ambil URL database dari Railway ---
-$DATABASE_URL = getenv("DATABASE_URL");
-
-// --- Tambahan debug (sementara saja) ---
-if (!$DATABASE_URL) {
-    die("❌ DATABASE_URL tidak terbaca. Pastikan sudah diatur di Railway → Variables tab.");
-}
-
-$url = parse_url($DATABASE_URL);
-
-// --- Parsing URL database Railway ---
-$server   = $url["host"];
-$username = $url["user"];
-$password = $url["pass"];
-$database = ltrim($url["path"], '/');
-$port     = isset($url["port"]) ? $url["port"] : 3306;
+// --- Ambil variabel environment dari Railway ---
+$server   = getenv("MYSQLHOST") ?: 'localhost';
+$username = getenv("MYSQLUSER") ?: 'root';
+$password = getenv("MYSQLPASSWORD") ?: '';
+$database = getenv("MYSQLDATABASE") ?: 'habit_db';
+$port     = getenv("MYSQLPORT") ?: 3306;
 
 // --- Koneksi ke MySQL ---
 $conn = new mysqli($server, $username, $password, $database, $port);
