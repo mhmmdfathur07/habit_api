@@ -1,50 +1,27 @@
 <?php
+include "config/db.php";
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+$data = json_decode(file_get_contents("php://input"), true);
+$name = $data["name"] ?? "";
+$target_type = $data["target_type"] ?? "daily";
+$target = $data["target"] ?? 7;
 
-include "config/db.php";
-
-$input = json_decode(file_get_contents("php://input"), true);
-if ($input) {
-    $name = $input['name'] ?? '';
-    $target_type = strtolower($input['target_type'] ?? 'daily');
-    $target = isset($input['target']) ? intval($input['target']) : 7;
-} else {
-    $name = $_POST['name'] ?? '';
-    $target_type = strtolower($_POST['target_type'] ?? 'daily');
-    $target = isset($_POST['target']) ? intval($_POST['target']) : 7;
-}
-
-// normalisasi nilai target_type lama
-if ($target_type === 'harian') $target_type = 'daily';
-if ($target_type === 'mingguan') $target_type = 'weekly';
-
-if (trim($name) === '' || trim($target_type) === '') {
-    echo json_encode(["success" => false, "error" => "Data tidak lengkap"]);
+if ($name == "") {
+    echo json_encode(["success" => false, "message" => "Habit name is required"]);
     exit;
 }
 
-if ($target < 1) $target = ($target_type === 'weekly' ? 4 : 7);
+$query = $conn->prepare("INSERT INTO habits (name, last_done, streak, target_type, target) VALUES (?, CURDATE(), 0, ?, ?)");
+$query->bind_param("ssi", $name, $target_type, $target);
 
-$stmt = $conn->prepare("INSERT INTO habits (name, target_type, target) VALUES (?, ?, ?)");
-$stmt->bind_param("ssi", $name, $target_type, $target);
-
-if ($stmt->execute()) {
-    echo json_encode([
-        "success" => true,
-        "id" => $conn->insert_id,
-        "message" => "Habit berhasil ditambahkan"
-    ]);
+if ($query->execute()) {
+    echo json_encode(["success" => true, "message" => "Habit added successfully"]);
 } else {
-    echo json_encode(["success" => false, "error" => $stmt->error]);
+    echo json_encode(["success" => false, "message" => "Failed to add habit"]);
 }
 
-$stmt->close();
+$query->close();
 $conn->close();
 ?>

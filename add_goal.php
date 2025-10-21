@@ -1,54 +1,27 @@
 <?php
 include "config/db.php";
-
-// 🔹 Izinkan akses dari semua origin (supaya Flutter bisa konek)
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-// 🔹 Jika request adalah OPTIONS (CORS preflight), hentikan di sini
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+$data = json_decode(file_get_contents("php://input"), true);
+$title = $data["title"] ?? "";
+$target_amount = $data["target_amount"] ?? 0;
+$deadline = $data["deadline"] ?? null;
+
+if ($title == "" || $target_amount <= 0) {
+    echo json_encode(["success" => false, "message" => "Title and target_amount required"]);
     exit;
 }
 
-// 🔹 Ambil data dari POST
-$title = isset($_POST['title']) ? trim($_POST['title']) : '';
-$target_amount = isset($_POST['target_amount']) ? floatval($_POST['target_amount']) : 0;
-$current_amount = isset($_POST['current_amount']) ? floatval($_POST['current_amount']) : 0;
-$deadline = isset($_POST['deadline']) && $_POST['deadline'] !== '' ? $_POST['deadline'] : null;
+$query = $conn->prepare("INSERT INTO saving_goals (title, target_amount, current_amount, deadline) VALUES (?, ?, 0, ?)");
+$query->bind_param("sds", $title, $target_amount, $deadline);
 
-// 🔹 Validasi data dasar
-if ($title === '' || $target_amount <= 0) {
-    echo json_encode(["success" => false, "error" => "Nama goal dan target harus diisi"]);
-    exit;
-}
-
-// 🔹 Siapkan query
-$stmt = $conn->prepare("
-    INSERT INTO saving_goals (title, target_amount, current_amount, deadline)
-    VALUES (?, ?, ?, ?)
-");
-
-// 🔹 Bind parameter (deadline bisa null)
-$stmt->bind_param("sdds", $title, $target_amount, $current_amount, $deadline);
-
-// 🔹 Eksekusi & kirim respon
-if ($stmt->execute()) {
-    echo json_encode([
-        "success" => true,
-        "id" => $conn->insert_id,
-        "message" => "Goal berhasil ditambahkan"
-    ]);
+if ($query->execute()) {
+    echo json_encode(["success" => true, "message" => "Goal added"]);
 } else {
-    echo json_encode([
-        "success" => false,
-        "error" => $stmt->error
-    ]);
+    echo json_encode(["success" => false, "message" => "Failed to add goal"]);
 }
 
-// 🔹 Tutup koneksi
-$stmt->close();
+$query->close();
 $conn->close();
 ?>

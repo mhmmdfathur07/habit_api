@@ -1,37 +1,25 @@
 <?php
-// 🌍 Izinkan akses dari Flutter Web
+include "config/db.php";
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Content-Type: application/json");
 
-// ✅ Tangani preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+$data = json_decode(file_get_contents("php://input"), true);
+$id = $data["id"] ?? 0;
+
+if (!$id) {
+    echo json_encode(["success" => false, "message" => "Habit ID required"]);
     exit;
 }
 
-include "config/db.php";
+$query = $conn->prepare("DELETE FROM habits WHERE id=?");
+$query->bind_param("i", $id);
 
-// ✅ Baca body JSON
-$input = json_decode(file_get_contents('php://input'), true);
-$id = $input['id'] ?? '';
-
-if ($id === '' || !is_numeric($id)) {
-    echo json_encode(["success" => false, "error" => "ID tidak valid"]);
-    exit;
-}
-
-// 🔹 Jalankan query hapus
-$stmt = $conn->prepare("DELETE FROM habits WHERE id = ?");
-$stmt->bind_param("i", $id);
-
-if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Habit berhasil dihapus"]);
+if ($query->execute()) {
+    echo json_encode(["success" => true, "message" => "Habit deleted"]);
 } else {
- echo json_encode(["success" => false, "error" => $stmt->error]);
+    echo json_encode(["success" => false, "message" => "Failed to delete habit"]);
 }
 
-$stmt->close();
+$query->close();
 $conn->close();
 ?>

@@ -1,17 +1,20 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
-header('Content-Type: application/json; charset=utf-8');
+$DATABASE_URL = getenv("DATABASE_URL");
 
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "habit_db";
+if ($DATABASE_URL) {
+    // Untuk Railway
+    $url = parse_url($DATABASE_URL);
+    $server = $url["host"];
+    $username = $url["user"];
+    $password = $url["pass"];
+    $database = substr($url["path"], 1);
+    $conn = new mysqli($server, $username, $password, $database);
+} else {
+    // Untuk XAMPP lokal
+    $conn = new mysqli("localhost", "root", "", "habit_db");
+}
 
-$conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "Koneksi gagal: " . $conn->connect_error]);
-    exit;
+    die(json_encode(["success" => false, "error" => "Connection failed: " . $conn->connect_error]));
 }
 ?>
