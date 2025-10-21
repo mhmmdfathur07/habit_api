@@ -1,6 +1,6 @@
 <?php
-include "cors.php";
-include "config/db.php";
+require_once "cors.php";
+require_once "config/db.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data["id"] ?? 0;
@@ -20,7 +20,6 @@ if ($result->num_rows == 0) {
 $habit = $result->fetch_assoc();
 $last_done = $habit["last_done"];
 $streak = $habit["streak"];
-
 $today = date("Y-m-d");
 
 if ($last_done == $today) {

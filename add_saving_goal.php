@@ -1,6 +1,6 @@
 <?php
-include "cors.php";
-include "config/db.php";
+require_once "cors.php";
+require_once "config/db.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 $title = $data["title"] ?? "";

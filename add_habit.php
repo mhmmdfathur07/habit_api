@@ -1,13 +1,13 @@
 <?php
-include "cors.php";
-include "config/db.php";
+require_once "cors.php";
+require_once "config/db.php";
 
 $data = json_decode(file_get_contents("php://input"), true);
 $name = $data["name"] ?? "";
 $target_type = $data["target_type"] ?? "daily";
 $target = $data["target"] ?? 7;
 
-if ($name == "") {
+if (empty($name)) {
     echo json_encode(["success" => false, "message" => "Habit name is required"]);
     exit;
 }
